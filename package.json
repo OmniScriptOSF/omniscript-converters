@@ -5,11 +5,12 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "test": "vitest",
-    "lint": "eslint src --ext .ts",
-    "clean": "rimraf dist"
+    "build": "pnpm exec tsc",
+    "dev": "pnpm exec tsc --watch",
+    "test": "pnpm exec vitest",
+    "lint": "pnpm exec eslint src --ext .ts",
+    "clean": "pnpm exec rimraf dist",
+    "typecheck": "pnpm exec tsc --noEmit"
   },
   "keywords": ["osf", "omniscript", "converter", "docx", "pptx", "xlsx", "pdf"],
   "author": "Alphin Tom",
