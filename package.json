@@ -1,0 +1,45 @@
+{
+  "name": "omniscript-converters",
+  "version": "0.5.4",
+  "description": "Format converters for OmniScript Format (OSF) - Convert to/from DOCX, PPTX, XLSX, PDF",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "lint": "eslint src --ext .ts",
+    "clean": "rimraf dist"
+  },
+  "keywords": ["osf", "omniscript", "converter", "docx", "pptx", "xlsx", "pdf"],
+  "author": "Alphin Tom",
+  "license": "MIT",
+  "dependencies": {
+    "omniscript-parser": "workspace:*",
+    "docx": "^8.5.0",
+    "pptxgenjs": "^3.13.0",
+    "exceljs": "^4.4.0",
+    "puppeteer": "^21.10.0",
+    "jszip": "^3.10.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.17",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.2",
+    "eslint": "^8.56.0",
+    "rimraf": "^5.0.5"
+  },
+  "peerDependencies": {
+    "omniscript-parser": "^0.5.0"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OmniScriptOSF/omniscript-core.git",
+    "directory": "omniscript-converters"
+  }
+}
