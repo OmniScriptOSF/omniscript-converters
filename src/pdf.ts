@@ -11,8 +11,8 @@ export class PDFConverter implements Converter {
     const html = this.generateHTML(document, options);
     
     const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
     });
     
     try {
@@ -87,15 +87,15 @@ export class PDFConverter implements Converter {
     let html = '<div class="meta-block">';
     
     if (meta.props.title) {
-      html += `<h1 class="document-title">${this.escapeHtml(meta.props.title)}</h1>`;
+      html += `<h1 class="document-title">${this.escapeHtml(String(meta.props.title))}</h1>`;
     }
     
     if (meta.props.author) {
-      html += `<p class="document-author">By: ${this.escapeHtml(meta.props.author)}</p>`;
+      html += `<p class="document-author">By: ${this.escapeHtml(String(meta.props.author))}</p>`;
     }
     
     if (meta.props.date) {
-      html += `<p class="document-date">Date: ${this.escapeHtml(meta.props.date)}</p>`;
+      html += `<p class="document-date">Date: ${this.escapeHtml(String(meta.props.date))}</p>`;
     }
     
     html += '</div>';

@@ -1,4 +1,4 @@
-import ExcelJS from 'exceljs';
+import * as ExcelJS from 'exceljs';
 import { OSFDocument, MetaBlock, DocBlock, SlideBlock, SheetBlock } from 'omniscript-parser';
 import { Converter, ConverterOptions, ConversionResult } from './types';
 
@@ -446,9 +446,9 @@ export class XLSXConverter implements Converter {
       if (block.type === 'meta') {
         const meta = block as MetaBlock;
         return {
-          title: meta.props.title,
-          author: meta.props.author,
-          date: meta.props.date
+          title: meta.props.title ? String(meta.props.title) : undefined,
+          author: meta.props.author ? String(meta.props.author) : undefined,
+          date: meta.props.date ? String(meta.props.date) : undefined
         };
       }
     }

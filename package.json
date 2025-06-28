@@ -17,7 +17,7 @@
   "dependencies": {
     "omniscript-parser": "workspace:*",
     "docx": "^8.5.0",
-    "pptxgenjs": "^3.13.0",
+    "pptxgenjs": "^4.0.1",
     "exceljs": "^4.4.0",
     "puppeteer": "^21.10.0",
     "jszip": "^3.10.1"

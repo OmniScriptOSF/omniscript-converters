@@ -62,7 +62,7 @@ export class DOCXConverter implements Converter {
         new Paragraph({
           children: [
             new TextRun({
-              text: meta.props.title,
+              text: String(meta.props.title),
               bold: true,
               size: 32,
             })
@@ -394,7 +394,7 @@ export class DOCXConverter implements Converter {
       if (block.type === 'meta') {
         const meta = block as MetaBlock;
         if (meta.props.title) {
-          return meta.props.title;
+          return String(meta.props.title);
         }
       }
     }
