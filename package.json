@@ -16,7 +16,7 @@
   "author": "Alphin Tom",
   "license": "MIT",
   "dependencies": {
-    "omniscript-parser": "workspace:*",
+    "omniscript-parser": "^0.5.5",
     "docx": "^8.5.0",
     "pptxgenjs": "^4.0.1",
     "exceljs": "^4.4.0",
