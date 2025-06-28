@@ -18,8 +18,8 @@ importers:
         specifier: ^3.10.1
         version: 3.10.1
       omniscript-parser:
-        specifier: ^0.5.5
-        version: 0.5.5
+        specifier: ^0.5.6
+        version: 0.5.6
       pptxgenjs:
         specifier: ^4.0.1
         version: 4.0.1
@@ -1110,8 +1110,8 @@ packages:
     resolution: {integrity: sha512-ppwTtiJZq0O/ai0z7yfudtBpWIoxM8yE6nHi1X47eFR2EWORqfbu6CnPlNsjeN683eT0qG6H/Pyf9fCcvjnnnQ==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  omniscript-parser@0.5.5:
-    resolution: {integrity: sha512-jWnYEMB8euZHh0YmHyxC/qDOIUbfO44m7W9HQbHVJlmW+mxJ6llLVEPElMCbW/Gv2RmJk6C+7pOLoWM1AufQNw==}
+  omniscript-parser@0.5.6:
+    resolution: {integrity: sha512-YY+7+JsGIuOTukfI9/Q5Gaivap5lBOnv2nWN+G7n15CeEEGM8XsOQ8X3+s89VZELg3rjkh0gsONfp6ick/B+4g==}
 
   once@1.4.0:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
@@ -2653,7 +2653,7 @@ snapshots:
     dependencies:
       path-key: 4.0.0
 
-  omniscript-parser@0.5.5: {}
+  omniscript-parser@0.5.6: {}
 
   once@1.4.0:
     dependencies:

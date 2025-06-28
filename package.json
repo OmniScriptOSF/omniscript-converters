@@ -1,6 +1,6 @@
 {
   "name": "omniscript-converters",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "Format converters for OmniScript Format (OSF) - Convert to/from DOCX, PPTX, XLSX, PDF",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,7 +16,7 @@
   "author": "Alphin Tom",
   "license": "MIT",
   "dependencies": {
-    "omniscript-parser": "^0.5.5",
+    "omniscript-parser": "^0.5.6",
     "docx": "^8.5.0",
     "pptxgenjs": "^4.0.1",
     "exceljs": "^4.4.0",
