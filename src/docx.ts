@@ -1,5 +1,5 @@
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, HeadingLevel, AlignmentType, WidthType } from 'docx';
-import { OSFDocument, MetaBlock, DocBlock, SlideBlock, SheetBlock } from 'omniscript-parser';
+import { OSFDocument, MetaBlock, DocBlock, SlideBlock, SheetBlock, ChartBlock, DiagramBlock, OSFCodeBlock } from 'omniscript-parser';
 import { Converter, ConverterOptions, ConversionResult } from './types';
 
 export class DOCXConverter implements Converter {
@@ -47,6 +47,15 @@ export class DOCXConverter implements Converter {
           break;
         case 'sheet':
           elements.push(...this.renderSheetBlock(block as SheetBlock));
+          break;
+        case 'chart':
+          elements.push(...this.renderChartBlock(block as ChartBlock));
+          break;
+        case 'diagram':
+          elements.push(...this.renderDiagramBlock(block as DiagramBlock));
+          break;
+        case 'osfcode':
+          elements.push(...this.renderCodeBlock(block as OSFCodeBlock));
           break;
       }
     }
@@ -387,6 +396,161 @@ export class DOCXConverter implements Converter {
     if (run.type === 'image') return run.alt || '';
     if (run.text) return run.text;
     return '';
+  }
+
+  private renderChartBlock(chart: ChartBlock): any[] {
+    const elements: any[] = [];
+    
+    if (chart.title) {
+      elements.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: chart.title,
+              bold: true,
+              size: 28
+            })
+          ],
+          heading: HeadingLevel.HEADING_2,
+          spacing: { before: 400, after: 200 }
+        })
+      );
+    }
+    
+    elements.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: `[Chart: ${chart.chartType} - ${chart.data.length} series]`,
+            italics: true
+          })
+        ],
+        spacing: { after: 400 }
+      })
+    );
+    
+    const dataText = chart.data.map(series => 
+      `${series.label}: [${series.values.join(', ')}]`
+    ).join('; ');
+    
+    elements.push(
+      new Paragraph({
+        children: [new TextRun({ text: dataText })],
+        spacing: { after: 400 }
+      })
+    );
+    
+    return elements;
+  }
+
+  private renderDiagramBlock(diagram: DiagramBlock): any[] {
+    const elements: any[] = [];
+    
+    if (diagram.title) {
+      elements.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: diagram.title,
+              bold: true,
+              size: 28
+            })
+          ],
+          heading: HeadingLevel.HEADING_2,
+          spacing: { before: 400, after: 200 }
+        })
+      );
+    }
+    
+    elements.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: `[Diagram: ${diagram.diagramType} using ${diagram.engine}]`,
+            italics: true
+          })
+        ],
+        spacing: { after: 200 }
+      })
+    );
+    
+    elements.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: diagram.code,
+            font: 'Courier New',
+            size: 20
+          })
+        ],
+        spacing: { after: 400 }
+      })
+    );
+    
+    return elements;
+  }
+
+  private renderCodeBlock(code: OSFCodeBlock): any[] {
+    const elements: any[] = [];
+    
+    if (code.caption) {
+      elements.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: code.caption,
+              italics: true,
+              size: 22
+            })
+          ],
+          spacing: { before: 400, after: 100 }
+        })
+      );
+    }
+    
+    const lines = code.code.split('\n');
+    lines.forEach((line, index) => {
+      const lineNum = index + 1;
+      const isHighlighted = code.highlight && code.highlight.includes(lineNum);
+      
+      const children: TextRun[] = [];
+      
+      if (code.lineNumbers) {
+        children.push(
+          new TextRun({
+            text: `${lineNum.toString().padStart(3, ' ')}  `,
+            font: 'Courier New',
+            size: 20,
+            color: '6E7781'
+          })
+        );
+      }
+      
+      children.push(
+        new TextRun({
+          text: line,
+          font: 'Courier New',
+          size: 20,
+          shading: isHighlighted ? { fill: 'FFF3CD' } : undefined
+        })
+      );
+      
+      elements.push(
+        new Paragraph({
+          children,
+          spacing: { line: 276 }
+        })
+      );
+    });
+    
+    elements.push(
+      new Paragraph({
+        children: [],
+        spacing: { after: 400 }
+      })
+    );
+    
+    return elements;
   }
 
   private getDocumentTitle(document: OSFDocument): string {

@@ -1,5 +1,5 @@
 import PptxGenJS from 'pptxgenjs';
-import { OSFDocument, MetaBlock, DocBlock, SlideBlock, SheetBlock } from 'omniscript-parser';
+import { OSFDocument, MetaBlock, DocBlock, SlideBlock, SheetBlock, ChartBlock, DiagramBlock, OSFCodeBlock } from 'omniscript-parser';
 import { Converter, ConverterOptions, ConversionResult } from './types';
 
 export class PPTXConverter implements Converter {
@@ -70,6 +70,15 @@ export class PPTXConverter implements Converter {
           break;
         case 'sheet':
           this.createSheetSlide(pptx, block as SheetBlock, options);
+          break;
+        case 'chart':
+          this.createChartSlide(pptx, block as ChartBlock, options);
+          break;
+        case 'diagram':
+          this.createDiagramSlide(pptx, block as DiagramBlock, options);
+          break;
+        case 'osfcode':
+          this.createCodeSlide(pptx, block as OSFCodeBlock, options);
           break;
       }
     }
@@ -574,6 +583,107 @@ export class PPTXConverter implements Converter {
     if (run.type === 'image') return run.alt || '';
     if (run.text) return run.text;
     return '';
+  }
+
+  private createChartSlide(pptx: PptxGenJS, chart: ChartBlock, options: ConverterOptions): void {
+    const slide = pptx.addSlide();
+    
+    slide.addText(chart.title, {
+      x: 0.5,
+      y: 0.5,
+      w: 9,
+      h: 0.75,
+      fontSize: 32,
+      bold: true,
+      color: '2C3E50'
+    });
+    
+    const chartData = chart.data.map((series: any) => ({
+      name: series.label,
+      labels: series.values.map((_: any, i: number) => `Point ${i + 1}`),
+      values: series.values
+    }));
+    
+    slide.addChart(pptx.ChartType[chart.chartType === 'bar' ? 'bar' : 'line'], chartData, {
+      x: 1,
+      y: 1.5,
+      w: 8,
+      h: 5,
+      showTitle: false,
+      showLegend: chart.options?.legend !== false,
+      chartColors: chart.options?.colors as string[] || undefined
+    });
+  }
+
+  private createDiagramSlide(pptx: PptxGenJS, diagram: DiagramBlock, options: ConverterOptions): void {
+    const slide = pptx.addSlide();
+    
+    const title = diagram.title || `${diagram.diagramType} Diagram`;
+    slide.addText(title, {
+      x: 0.5,
+      y: 0.5,
+      w: 9,
+      h: 0.75,
+      fontSize: 32,
+      bold: true,
+      color: '2C3E50'
+    });
+    
+    slide.addText(`[${diagram.diagramType} diagram using ${diagram.engine}]`, {
+      x: 1,
+      y: 1.5,
+      w: 8,
+      h: 0.5,
+      fontSize: 18,
+      italic: true,
+      color: '7F8C8D'
+    });
+    
+    slide.addText(diagram.code, {
+      x: 1,
+      y: 2.5,
+      w: 8,
+      h: 4,
+      fontSize: 14,
+      fontFace: 'Courier New',
+      color: '2C3E50',
+      valign: 'top'
+    });
+  }
+
+  private createCodeSlide(pptx: PptxGenJS, code: OSFCodeBlock, options: ConverterOptions): void {
+    const slide = pptx.addSlide();
+    
+    const title = code.caption || `${code.language} Code`;
+    slide.addText(title, {
+      x: 0.5,
+      y: 0.5,
+      w: 9,
+      h: 0.75,
+      fontSize: 32,
+      bold: true,
+      color: '2C3E50'
+    });
+    
+    let codeText = code.code;
+    if (code.lineNumbers) {
+      const lines = code.code.split('\n');
+      codeText = lines.map((line: string, i: number) => 
+        `${(i + 1).toString().padStart(3, ' ')}  ${line}`
+      ).join('\n');
+    }
+    
+    slide.addText(codeText, {
+      x: 0.75,
+      y: 1.5,
+      w: 8.5,
+      h: 5,
+      fontSize: 14,
+      fontFace: 'Courier New',
+      color: '24292E',
+      fill: { color: 'F6F8FA' },
+      valign: 'top'
+    });
   }
 
   private getMetadata(document: OSFDocument): { title?: string; author?: string; date?: string } {

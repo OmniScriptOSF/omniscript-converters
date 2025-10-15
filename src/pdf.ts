@@ -1,8 +1,10 @@
 import puppeteer from 'puppeteer';
-import { OSFDocument, MetaBlock, DocBlock, SlideBlock, SheetBlock } from 'omniscript-parser';
+import { OSFDocument, MetaBlock, DocBlock, SlideBlock, SheetBlock, ChartBlock, DiagramBlock, OSFCodeBlock } from 'omniscript-parser';
 import { Converter, ConverterOptions, ConversionResult } from './types';
 
 export class PDFConverter implements Converter {
+  private chartIdCounter = 0;
+
   getSupportedFormats(): string[] {
     return ['pdf'];
   }
@@ -11,7 +13,7 @@ export class PDFConverter implements Converter {
     const html = this.generateHTML(document, options);
     
     const browser = await puppeteer.launch({
-      headless: 'new',
+      headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
     });
     
@@ -73,6 +75,15 @@ export class PDFConverter implements Converter {
           break;
         case 'sheet':
           html += this.renderSheetBlock(block as SheetBlock, options);
+          break;
+        case 'chart':
+          html += this.renderChartBlock(block as ChartBlock, options);
+          break;
+        case 'diagram':
+          html += this.renderDiagramBlock(block as DiagramBlock, options);
+          break;
+        case 'osfcode':
+          html += this.renderCodeBlock(block as OSFCodeBlock, options);
           break;
       }
     }
@@ -207,13 +218,103 @@ export class PDFConverter implements Converter {
   }
 
   private escapeHtml(text: string): string {
-    const div = { innerHTML: '', textContent: text } as any;
-    return div.innerHTML || text
+    return text
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  }
+
+  private renderChartBlock(chart: ChartBlock, options: ConverterOptions): string {
+    let html = '<div class="chart-block" style="margin: 40px 0; page-break-inside: avoid;">';
+    
+    if (chart.title) {
+      html += `<h3 style="text-align: center; margin-bottom: 20px;">${this.escapeHtml(chart.title)}</h3>`;
+    }
+    
+    const chartId = `chart-${++this.chartIdCounter}`;
+    html += '<div class="chart-container" style="width: 100%; height: 400px; position: relative;">';
+    html += `<canvas id="${chartId}"></canvas>`;
+    html += '</div>';
+    
+    html += `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>`;
+    html += '<script>';
+    html += `
+      const chartData = ${JSON.stringify({
+        labels: chart.data.map((d: any) => d.label),
+        datasets: chart.data.map((d: any, i: number) => ({
+          label: d.label,
+          data: d.values,
+          backgroundColor: chart.options?.colors?.[i] || undefined
+        }))
+      })};
+      const chartConfig = {
+        type: '${chart.chartType}',
+        data: chartData,
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: ${chart.options?.legend !== false} }
+          }
+        }
+      };
+    `;
+    html += '</script>';
+    html += '</div>';
+    
+    return html;
+  }
+
+  private renderDiagramBlock(diagram: DiagramBlock, options: ConverterOptions): string {
+    let html = '<div class="diagram-block" style="margin: 40px 0; page-break-inside: avoid;">';
+    
+    if (diagram.title) {
+      html += `<h3 style="text-align: center; margin-bottom: 20px;">${this.escapeHtml(diagram.title)}</h3>`;
+    }
+    
+    html += '<div class="mermaid" style="text-align: center;">';
+    html += this.escapeHtml(diagram.code);
+    html += '</div>';
+    
+    html += '<script type="module">';
+    html += `
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    `;
+    html += '</script>';
+    html += '</div>';
+    
+    return html;
+  }
+
+  private renderCodeBlock(code: OSFCodeBlock, options: ConverterOptions): string {
+    let html = '<div class="code-block" style="margin: 40px 0; page-break-inside: avoid;">';
+    
+    if (code.caption) {
+      html += `<p class="code-caption" style="font-style: italic; margin-bottom: 10px;">${this.escapeHtml(code.caption)}</p>`;
+    }
+    
+    html += '<pre style="background: #f6f8fa; padding: 16px; border-radius: 6px; overflow-x: auto; border: 1px solid #e1e4e8;">';
+    html += `<code class="language-${code.language}">`;
+    
+    const lines = code.code.split('\n');
+    lines.forEach((line: string, index: number) => {
+      const lineNum = index + 1;
+      const isHighlighted = code.highlight && code.highlight.includes(lineNum);
+      const lineStyle = isHighlighted ? 'background: #fff3cd;' : '';
+      
+      if (code.lineNumbers) {
+        html += `<span style="${lineStyle}"><span style="color: #6e7781; margin-right: 16px; user-select: none;">${lineNum.toString().padStart(3, ' ')}</span>${this.escapeHtml(line)}</span>\n`;
+      } else {
+        html += `<span style="${lineStyle}">${this.escapeHtml(line)}</span>\n`;
+      }
+    });
+    
+    html += '</code></pre>';
+    html += '</div>';
+    
+    return html;
   }
 
   private getThemeStyles(theme: string): string {

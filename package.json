@@ -1,6 +1,6 @@
 {
   "name": "omniscript-converters",
-  "version": "0.5.7",
+  "version": "1.0.0",
   "description": "Format converters for OmniScript Format (OSF) - Convert OSF documents to DOCX, PPTX, XLSX, and PDF with enterprise-grade quality",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -39,22 +39,22 @@
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "omniscript-parser": "^0.5.7",
-    "docx": "^8.5.0",
-    "pptxgenjs": "^4.0.1",
+    "docx": "^9.5.1",
     "exceljs": "^4.4.0",
-    "puppeteer": "^21.10.0",
-    "jszip": "^3.10.1"
+    "jszip": "^3.10.1",
+    "omniscript-parser": "^1.0.0",
+    "pptxgenjs": "^4.0.1",
+    "puppeteer": "^24.25.0"
   },
   "devDependencies": {
-    "@types/node": "^20.11.17",
-    "typescript": "^5.3.3",
-    "vitest": "^1.2.2",
-    "eslint": "^8.56.0",
-    "rimraf": "^5.0.5"
+    "@types/node": "^24.7.2",
+    "eslint": "^9.37.0",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   },
   "peerDependencies": {
-    "omniscript-parser": "^0.5.0"
+    "omniscript-parser": "^1.0.0"
   },
   "engines": {
     "node": ">=18.0.0"
