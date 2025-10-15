@@ -1,20 +1,43 @@
 {
   "name": "omniscript-converters",
   "version": "0.5.6",
-  "description": "Format converters for OmniScript Format (OSF) - Convert to/from DOCX, PPTX, XLSX, PDF",
+  "description": "Format converters for OmniScript Format (OSF) - Convert OSF documents to DOCX, PPTX, XLSX, and PDF with enterprise-grade quality",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OmniScriptOSF/omniscript-core.git",
+    "directory": "omniscript-converters"
+  },
+  "bugs": {
+    "url": "https://github.com/OmniScriptOSF/omniscript-core/issues"
+  },
+  "homepage": "https://github.com/OmniScriptOSF/omniscript-core/tree/main/omniscript-converters#readme",
   "scripts": {
     "build": "pnpm exec tsc",
     "dev": "pnpm exec tsc --watch",
     "test": "pnpm exec vitest",
     "lint": "pnpm exec eslint src --ext .ts",
     "clean": "pnpm exec rimraf dist",
-    "typecheck": "pnpm exec tsc --noEmit"
+    "typecheck": "pnpm exec tsc --noEmit",
+    "prepublishOnly": "pnpm run build"
   },
-  "keywords": ["osf", "omniscript", "converter", "docx", "pptx", "xlsx", "pdf"],
-  "author": "Alphin Tom",
-  "license": "MIT",
   "dependencies": {
     "omniscript-parser": "^0.5.6",
     "docx": "^8.5.0",
@@ -33,14 +56,32 @@
   "peerDependencies": {
     "omniscript-parser": "^0.5.0"
   },
-  "files": [
-    "dist/**/*",
-    "README.md",
-    "LICENSE"
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "osf",
+    "omniscript",
+    "converter",
+    "docx",
+    "pptx",
+    "xlsx",
+    "pdf",
+    "word",
+    "powerpoint",
+    "excel",
+    "document",
+    "presentation",
+    "spreadsheet",
+    "export",
+    "format",
+    "conversion",
+    "typescript"
   ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/OmniScriptOSF/omniscript-core.git",
-    "directory": "omniscript-converters"
-  }
+  "author": {
+    "name": "Alphin Tom",
+    "email": "alpha912@github.com",
+    "url": "https://github.com/alpha912"
+  },
+  "license": "MIT"
 }

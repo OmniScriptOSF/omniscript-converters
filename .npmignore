@@ -1,0 +1,33 @@
+# Source files
+src/
+*.ts
+!*.d.ts
+
+# Tests
+tests/
+__tests__/
+*.test.ts
+*.spec.ts
+
+# Build configs
+tsconfig.json
+vitest.config.ts
+eslint.config.js
+
+# Development files
+.vscode/
+.idea/
+*.log
+.DS_Store
+
+# Git
+.git/
+.gitignore
+
+# Documentation (keep README.md)
+docs/
+*.md
+!README.md
+
+# CI/CD
+.github/
