@@ -1,6 +1,6 @@
 {
   "name": "omniscript-converters",
-  "version": "0.5.6",
+  "version": "0.5.7",
   "description": "Format converters for OmniScript Format (OSF) - Convert OSF documents to DOCX, PPTX, XLSX, and PDF with enterprise-grade quality",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -28,7 +28,7 @@
   "bugs": {
     "url": "https://github.com/OmniScriptOSF/omniscript-core/issues"
   },
-  "homepage": "https://github.com/OmniScriptOSF/omniscript-core/tree/main/omniscript-converters#readme",
+  "homepage": "https://omniscriptosf.github.io",
   "scripts": {
     "build": "pnpm exec tsc",
     "dev": "pnpm exec tsc --watch",
@@ -39,7 +39,7 @@
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "omniscript-parser": "^0.5.6",
+    "omniscript-parser": "^0.5.7",
     "docx": "^8.5.0",
     "pptxgenjs": "^4.0.1",
     "exceljs": "^4.4.0",
