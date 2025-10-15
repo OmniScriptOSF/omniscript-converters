@@ -142,7 +142,57 @@ export class PPTXConverter implements Converter {
   private createSlideFromBlock(pptx: PptxGenJS, slideBlock: SlideBlock, options: ConverterOptions): void {
     const slide = pptx.addSlide();
     const theme = this.getThemeConfiguration(options.theme || 'default');
-    
+
+    // Apply layout based on slide props
+    const layout = (slideBlock as any).layout || 'TitleAndContent';
+
+    // Add transition if specified
+    if ((slideBlock as any).transition) {
+      const transition = this.getTransitionEffect((slideBlock as any).transition);
+      if (transition) {
+        (slide as any).transition = transition;
+      }
+    }
+
+    // Add notes if specified
+    if ((slideBlock as any).notes) {
+      slide.addNotes(String((slideBlock as any).notes));
+    }
+
+    // Render based on layout type
+    switch (layout) {
+      case 'TitleOnly':
+        this.renderTitleOnlyLayout(slide, slideBlock, theme);
+        break;
+      case 'TitleAndContent':
+      case 'TitleAndBullets':
+        this.renderTitleAndContentLayout(slide, slideBlock, theme);
+        break;
+      case 'TwoColumn':
+        this.renderTwoColumnLayout(slide, slideBlock, theme);
+        break;
+      case 'Blank':
+        this.renderBlankLayout(slide, slideBlock, theme);
+        break;
+      default:
+        this.renderTitleAndContentLayout(slide, slideBlock, theme);
+    }
+  }
+
+  private renderTitleOnlyLayout(slide: any, slideBlock: SlideBlock, theme: any): void {
+    if (slideBlock.title) {
+      slide.addText(slideBlock.title, {
+        x: 0.5, y: 3, w: 9, h: 1.5,
+        align: 'center',
+        fontSize: 44,
+        bold: true,
+        color: theme.primary,
+        fontFace: theme.titleFont
+      });
+    }
+  }
+
+  private renderTitleAndContentLayout(slide: any, slideBlock: SlideBlock, theme: any): void {
     // Add slide title
     if (slideBlock.title) {
       slide.addText(slideBlock.title, {
@@ -153,41 +203,235 @@ export class PPTXConverter implements Converter {
         fontFace: theme.titleFont
       });
     }
-    
+
     // Add slide content
     if (slideBlock.content) {
       let yPosition = slideBlock.title ? 1.8 : 0.5;
-      
+
       for (const contentBlock of slideBlock.content) {
         if (contentBlock.type === 'unordered_list') {
-          const bullets = contentBlock.items.map(item => {
+          const bullets = contentBlock.items.map((item: any) => {
             const itemText = item.content.map(this.extractText).join('');
-            return { text: itemText, options: { bullet: true } };
+            return this.parseInlineFormatting(itemText);
           });
-          
-          slide.addText(bullets, {
-            x: 0.5, y: yPosition, w: 9, h: 4.5,
-            fontSize: 20,
-            color: theme.text,
-            fontFace: theme.bodyFont,
-            valign: 'top'
-          });
-          
-          yPosition += 4.5;
+
+          for (const bullet of bullets) {
+            slide.addText(bullet, {
+              x: 0.5, y: yPosition, w: 9, h: 0.6,
+              fontSize: 20,
+              color: theme.text,
+              fontFace: theme.bodyFont,
+              bullet: { type: 'bullet' }
+            });
+            yPosition += 0.6;
+          }
         } else if (contentBlock.type === 'paragraph') {
           const paragraphText = contentBlock.content.map(this.extractText).join('');
-          slide.addText(paragraphText, {
+          const formattedText = this.parseInlineFormatting(paragraphText);
+
+          slide.addText(formattedText, {
             x: 0.5, y: yPosition, w: 9, h: 1.5,
             fontSize: 18,
             color: theme.text,
             fontFace: theme.bodyFont,
             valign: 'top'
           });
-          
+
           yPosition += 1.8;
         }
       }
     }
+  }
+
+  private renderTwoColumnLayout(slide: any, slideBlock: SlideBlock, theme: any): void {
+    // Add slide title
+    if (slideBlock.title) {
+      slide.addText(slideBlock.title, {
+        x: 0.5, y: 0.5, w: 9, h: 1,
+        fontSize: 32,
+        bold: true,
+        color: theme.primary,
+        fontFace: theme.titleFont
+      });
+    }
+
+    if (slideBlock.content && slideBlock.content.length > 0) {
+      const halfContent = Math.ceil(slideBlock.content.length / 2);
+      const leftColumn = slideBlock.content.slice(0, halfContent);
+      const rightColumn = slideBlock.content.slice(halfContent);
+
+      let yPosition = slideBlock.title ? 1.8 : 0.5;
+
+      // Left column
+      this.renderColumnContent(slide, leftColumn, 0.5, yPosition, 4.2, theme);
+
+      // Right column
+      this.renderColumnContent(slide, rightColumn, 5.3, yPosition, 4.2, theme);
+    }
+  }
+
+  private renderBlankLayout(slide: any, slideBlock: SlideBlock, theme: any): void {
+    if (slideBlock.content) {
+      let yPosition = 0.5;
+
+      for (const contentBlock of slideBlock.content) {
+        if (contentBlock.type === 'unordered_list') {
+          const bullets = contentBlock.items.map((item: any) => {
+            const itemText = item.content.map(this.extractText).join('');
+            return this.parseInlineFormatting(itemText);
+          });
+
+          for (const bullet of bullets) {
+            slide.addText(bullet, {
+              x: 0.5, y: yPosition, w: 9, h: 0.5,
+              fontSize: 18,
+              color: theme.text,
+              fontFace: theme.bodyFont,
+              bullet: { type: 'bullet' }
+            });
+            yPosition += 0.5;
+          }
+        } else if (contentBlock.type === 'paragraph') {
+          const paragraphText = contentBlock.content.map(this.extractText).join('');
+          const formattedText = this.parseInlineFormatting(paragraphText);
+
+          slide.addText(formattedText, {
+            x: 0.5, y: yPosition, w: 9, h: 1.2,
+            fontSize: 16,
+            color: theme.text,
+            fontFace: theme.bodyFont
+          });
+
+          yPosition += 1.4;
+        }
+      }
+    }
+  }
+
+  private renderColumnContent(slide: any, content: any[], x: number, y: number, width: number, theme: any): void {
+    let yPosition = y;
+
+    for (const contentBlock of content) {
+      if (contentBlock.type === 'unordered_list') {
+        const bullets = contentBlock.items.map((item: any) => {
+          const itemText = item.content.map(this.extractText).join('');
+          return this.parseInlineFormatting(itemText);
+        });
+
+        for (const bullet of bullets) {
+          slide.addText(bullet, {
+            x, y: yPosition, w: width, h: 0.5,
+            fontSize: 16,
+            color: theme.text,
+            fontFace: theme.bodyFont,
+            bullet: { type: 'bullet' }
+          });
+          yPosition += 0.5;
+        }
+      } else if (contentBlock.type === 'paragraph') {
+        const paragraphText = contentBlock.content.map(this.extractText).join('');
+        const formattedText = this.parseInlineFormatting(paragraphText);
+
+        slide.addText(formattedText, {
+          x, y: yPosition, w: width, h: 1,
+          fontSize: 14,
+          color: theme.text,
+          fontFace: theme.bodyFont
+        });
+
+        yPosition += 1.2;
+      }
+    }
+  }
+
+  private parseInlineFormatting(text: string): any[] {
+    const parts: any[] = [];
+    let currentIndex = 0;
+
+    // Match **bold**, *italic*, `code`
+    const boldRegex = /\*\*(.+?)\*\*/g;
+    const italicRegex = /\*(.+?)\*/g;
+    const codeRegex = /`(.+?)`/g;
+
+    const matches: Array<{index: number, length: number, text: string, format: any}> = [];
+
+    // Find all bold matches
+    let match;
+    while ((match = boldRegex.exec(text)) !== null) {
+      matches.push({
+        index: match.index,
+        length: match[0].length,
+        text: match[1],
+        format: { bold: true }
+      });
+    }
+
+    // Find all italic matches (excluding bold)
+    const textWithoutBold = text.replace(/\*\*(.+?)\*\*/g, '  ');
+    while ((match = italicRegex.exec(textWithoutBold)) !== null) {
+      matches.push({
+        index: match.index,
+        length: match[0].length,
+        text: match[1],
+        format: { italic: true }
+      });
+    }
+
+    // Find all code matches
+    while ((match = codeRegex.exec(text)) !== null) {
+      matches.push({
+        index: match.index,
+        length: match[0].length,
+        text: match[1],
+        format: { fontFace: 'Courier New', color: '666666' }
+      });
+    }
+
+    // Sort matches by index
+    matches.sort((a, b) => a.index - b.index);
+
+    // Build text parts
+    for (const m of matches) {
+      if (m.index > currentIndex) {
+        const plainText = text.substring(currentIndex, m.index);
+        if (plainText) {
+          parts.push({ text: plainText, options: {} });
+        }
+      }
+
+      parts.push({ text: m.text, options: m.format });
+      currentIndex = m.index + m.length;
+    }
+
+    // Add remaining text
+    if (currentIndex < text.length) {
+      const remainingText = text.substring(currentIndex);
+      if (remainingText) {
+        parts.push({ text: remainingText, options: {} });
+      }
+    }
+
+    // If no formatting found, return the entire text
+    if (parts.length === 0) {
+      parts.push({ text, options: {} });
+    }
+
+    return parts;
+  }
+
+  private getTransitionEffect(transition: string): any {
+    const transitions: Record<string, any> = {
+      'FadeIn': { type: 'fade' },
+      'Fade': { type: 'fade' },
+      'Slide': { type: 'push', dir: 'right' },
+      'Push': { type: 'push', dir: 'down' },
+      'Wipe': { type: 'wipe', dir: 'right' },
+      'Zoom': { type: 'zoom' },
+      'Split': { type: 'split', dir: 'vert' },
+      'Reveal': { type: 'reveal', dir: 'right' }
+    };
+
+    return transitions[transition] || transitions['Fade'];
   }
 
   private createSheetSlide(pptx: PptxGenJS, sheet: SheetBlock, options: ConverterOptions): void {
@@ -391,9 +635,75 @@ export class PPTXConverter implements Converter {
         tableBackground: 'F9FAFB',
         titleFont: 'Segoe UI',
         bodyFont: 'Segoe UI'
+      },
+      dark: {
+        primary: 'F59E0B',
+        secondary: 'FCD34D',
+        accent: '10B981',
+        text: 'E5E7EB',
+        background: '1F2937',
+        border: '4B5563',
+        tableBackground: '374151',
+        titleFont: 'Calibri',
+        bodyFont: 'Calibri'
+      },
+      minimal: {
+        primary: '000000',
+        secondary: '666666',
+        accent: '000000',
+        text: '333333',
+        background: 'FFFFFF',
+        border: 'CCCCCC',
+        tableBackground: 'FAFAFA',
+        titleFont: 'Helvetica',
+        bodyFont: 'Helvetica'
+      },
+      vibrant: {
+        primary: 'EC4899',
+        secondary: 'F472B6',
+        accent: '8B5CF6',
+        text: '1F2937',
+        background: 'FFFFFF',
+        border: 'E5E7EB',
+        tableBackground: 'FDF4FF',
+        titleFont: 'Arial',
+        bodyFont: 'Arial'
+      },
+      ocean: {
+        primary: '0EA5E9',
+        secondary: '06B6D4',
+        accent: '3B82F6',
+        text: '0F172A',
+        background: 'FFFFFF',
+        border: 'BAE6FD',
+        tableBackground: 'F0F9FF',
+        titleFont: 'Calibri',
+        bodyFont: 'Calibri'
+      },
+      forest: {
+        primary: '059669',
+        secondary: '10B981',
+        accent: '14B8A6',
+        text: '064E3B',
+        background: 'FFFFFF',
+        border: 'A7F3D0',
+        tableBackground: 'F0FDF4',
+        titleFont: 'Georgia',
+        bodyFont: 'Georgia'
+      },
+      sunset: {
+        primary: 'DC2626',
+        secondary: 'F97316',
+        accent: 'FBBF24',
+        text: '7C2D12',
+        background: 'FFFFFF',
+        border: 'FED7AA',
+        tableBackground: 'FFF7ED',
+        titleFont: 'Arial',
+        bodyFont: 'Arial'
       }
     };
-    
+
     return themes[theme] || themes.default;
   }
 }

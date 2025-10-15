@@ -317,12 +317,70 @@ export class PDFConverter implements Converter {
           .document-title { color: #1a365d; }
           .slide-title { border-bottom-color: #2b6cb0; }
           .slide-block { border-color: #2b6cb0; }
+          .sheet-table th { background-color: #ebf4ff; }
         `;
       case 'academic':
         return baseStyles + `
           body { font-family: 'Times New Roman', serif; }
           .document-title { color: #2d3748; }
           .slide-title { border-bottom-color: #4a5568; }
+          .sheet-table th { background-color: #f7fafc; }
+        `;
+      case 'modern':
+        return baseStyles + `
+          body { font-family: 'Segoe UI', system-ui, sans-serif; }
+          .document-title { color: #6366f1; }
+          .slide-title { border-bottom-color: #06b6d4; }
+          .slide-block { border-color: #8b5cf6; }
+          .sheet-table th { background-color: #f9fafb; }
+        `;
+      case 'dark':
+        return baseStyles + `
+          body { background-color: #1f2937; color: #e5e7eb; }
+          .document-title { color: #f59e0b; }
+          .document-author, .document-date { color: #fcd34d; }
+          .slide-title { border-bottom-color: #10b981; color: #f59e0b; }
+          .slide-block { border-color: #4b5563; background-color: #374151; }
+          h1, h2, h3 { color: #fcd34d; }
+          .sheet-table { border-color: #4b5563; }
+          .sheet-table th { background-color: #374151; color: #f59e0b; }
+        `;
+      case 'minimal':
+        return baseStyles + `
+          body { font-family: 'Helvetica', 'Arial', sans-serif; }
+          .document-title { color: #000; }
+          .slide-title { border-bottom-color: #000; }
+          .slide-block { border-color: #ccc; }
+          .sheet-table th { background-color: #fafafa; }
+        `;
+      case 'vibrant':
+        return baseStyles + `
+          .document-title { color: #ec4899; }
+          .slide-title { border-bottom-color: #8b5cf6; }
+          .slide-block { border-color: #f472b6; }
+          .sheet-table th { background-color: #fdf4ff; }
+        `;
+      case 'ocean':
+        return baseStyles + `
+          .document-title { color: #0ea5e9; }
+          .slide-title { border-bottom-color: #3b82f6; }
+          .slide-block { border-color: #06b6d4; }
+          .sheet-table th { background-color: #f0f9ff; }
+        `;
+      case 'forest':
+        return baseStyles + `
+          body { font-family: 'Georgia', serif; }
+          .document-title { color: #059669; }
+          .slide-title { border-bottom-color: #14b8a6; }
+          .slide-block { border-color: #10b981; }
+          .sheet-table th { background-color: #f0fdf4; }
+        `;
+      case 'sunset':
+        return baseStyles + `
+          .document-title { color: #dc2626; }
+          .slide-title { border-bottom-color: #fbbf24; }
+          .slide-block { border-color: #f97316; }
+          .sheet-table th { background-color: #fff7ed; }
         `;
       default:
         return baseStyles;
