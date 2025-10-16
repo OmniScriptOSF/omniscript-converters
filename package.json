@@ -1,6 +1,6 @@
 {
   "name": "omniscript-converters",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Format converters for OmniScript Format (OSF) - Convert OSF documents to DOCX, PPTX, XLSX, and PDF with enterprise-grade quality",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
