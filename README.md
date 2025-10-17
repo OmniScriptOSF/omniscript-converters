@@ -30,6 +30,7 @@
 - Custom themes & styling
 - Vector graphics support
 - Print-optimized layouts
+- **v1.2:** @table rendering
 
 </td>
 <td width="25%">
@@ -39,6 +40,7 @@
 - Rich text formatting
 - Tables with styling
 - Document metadata
+- **v1.2:** @table support
 
 </td>
 <td width="25%">
@@ -48,6 +50,7 @@
 - Automatic slide generation
 - Theme-based styling
 - Interactive layouts
+- **v1.2:** @table support
 
 </td>
 <td width="25%">
@@ -57,10 +60,16 @@
 - Formula evaluation
 - Multiple worksheets
 - Data type preservation
+- **v1.2:** @table support
 
 </td>
 </tr>
 </table>
+
+### 🆕 v1.2 Features
+- ✅ **@table blocks** - Render markdown-style tables in all formats
+- ✅ **@include resolution** - Support for modular document composition
+- ✅ **Enhanced security** - Grade A+ validation and sanitization
 
 ---
 

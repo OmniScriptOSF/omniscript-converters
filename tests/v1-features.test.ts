@@ -301,7 +301,7 @@ describe('v1.0 Features - Code Blocks', () => {
       
       expect(result.buffer.length).toBeGreaterThan(500);
     }
-  });
+  }, { timeout: 15000 }); // Increased timeout for 5 sequential Puppeteer conversions
 });
 
 describe('v1.0 Features - Mixed Documents', () => {
