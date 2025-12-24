@@ -51,7 +51,12 @@
     "eslint": "^9.37.0",
     "rimraf": "^6.0.1",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
+    "vitest": "^4.0.16"
+  },
+  "overrides": {
+    "glob": "11.1.0",
+    "js-yaml": "4.1.1",
+    "vite": "7.3.0"
   },
   "peerDependencies": {
     "omniscript-parser": "^1.2.0"
