@@ -1,5 +1,25 @@
-import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, HeadingLevel, AlignmentType, WidthType } from 'docx';
-import { OSFDocument, MetaBlock, DocBlock, SlideBlock, SheetBlock, ChartBlock, DiagramBlock, OSFCodeBlock } from 'omniscript-parser';
+import {
+  Document,
+  Packer,
+  Paragraph,
+  Table,
+  TableRow,
+  TableCell,
+  TextRun,
+  HeadingLevel,
+  AlignmentType,
+  WidthType,
+} from 'docx';
+import {
+  OSFDocument,
+  MetaBlock,
+  DocBlock,
+  SlideBlock,
+  SheetBlock,
+  ChartBlock,
+  DiagramBlock,
+  OSFCodeBlock,
+} from 'omniscript-parser';
 import { Converter, ConverterOptions, ConversionResult } from './types';
 
 export class DOCXConverter implements Converter {
@@ -9,23 +29,25 @@ export class DOCXConverter implements Converter {
 
   async convert(document: OSFDocument, options: ConverterOptions = {}): Promise<ConversionResult> {
     const docElements = this.generateDocumentElements(document, options);
-    
+
     const doc = new Document({
       creator: 'OmniScript OSF',
       title: this.getDocumentTitle(document),
       description: 'Generated from OSF document',
-      sections: [{
-        properties: {},
-        children: docElements
-      }]
+      sections: [
+        {
+          properties: {},
+          children: docElements,
+        },
+      ],
     });
 
     const buffer = await Packer.toBuffer(doc);
-    
+
     return {
       buffer,
       mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      extension: 'docx'
+      extension: 'docx',
     };
   }
 
@@ -74,11 +96,11 @@ export class DOCXConverter implements Converter {
               text: String(meta.props.title),
               bold: true,
               size: 32,
-            })
+            }),
           ],
           heading: HeadingLevel.TITLE,
           alignment: AlignmentType.CENTER,
-          spacing: { after: 400 }
+          spacing: { after: 400 },
         })
       );
     }
@@ -95,11 +117,11 @@ export class DOCXConverter implements Converter {
             new TextRun({
               text: metaInfo.join(' | '),
               italics: true,
-              color: '666666'
-            })
+              color: '666666',
+            }),
           ],
           alignment: AlignmentType.CENTER,
-          spacing: { after: 600 }
+          spacing: { after: 600 },
         })
       );
     }
@@ -117,7 +139,7 @@ export class DOCXConverter implements Converter {
 
     for (const line of lines) {
       const trimmed = line.trim();
-      
+
       if (trimmed.startsWith('# ')) {
         // Heading 1
         if (currentParagraph.length > 0) {
@@ -128,7 +150,7 @@ export class DOCXConverter implements Converter {
           new Paragraph({
             children: [new TextRun({ text: trimmed.substring(2), bold: true, size: 28 })],
             heading: HeadingLevel.HEADING_1,
-            spacing: { before: 240, after: 120 }
+            spacing: { before: 240, after: 120 },
           })
         );
       } else if (trimmed.startsWith('## ')) {
@@ -141,7 +163,7 @@ export class DOCXConverter implements Converter {
           new Paragraph({
             children: [new TextRun({ text: trimmed.substring(3), bold: true, size: 24 })],
             heading: HeadingLevel.HEADING_2,
-            spacing: { before: 200, after: 100 }
+            spacing: { before: 200, after: 100 },
           })
         );
       } else if (trimmed.startsWith('### ')) {
@@ -154,7 +176,7 @@ export class DOCXConverter implements Converter {
           new Paragraph({
             children: [new TextRun({ text: trimmed.substring(4), bold: true, size: 20 })],
             heading: HeadingLevel.HEADING_3,
-            spacing: { before: 160, after: 80 }
+            spacing: { before: 160, after: 80 },
           })
         );
       } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
@@ -166,11 +188,8 @@ export class DOCXConverter implements Converter {
         const listText = trimmed.substring(2);
         elements.push(
           new Paragraph({
-            children: [
-              new TextRun({ text: '• ' }),
-              ...this.parseInlineFormatting(listText)
-            ],
-            spacing: { after: 80 }
+            children: [new TextRun({ text: '• ' }), ...this.parseInlineFormatting(listText)],
+            spacing: { after: 80 },
           })
         );
       } else if (trimmed === '') {
@@ -205,11 +224,11 @@ export class DOCXConverter implements Converter {
               text: slide.title,
               bold: true,
               size: 24,
-              color: '2E74B5'
-            })
+              color: '2E74B5',
+            }),
           ],
           heading: HeadingLevel.HEADING_2,
-          spacing: { before: 400, after: 200 }
+          spacing: { before: 400, after: 200 },
         })
       );
     }
@@ -222,11 +241,8 @@ export class DOCXConverter implements Converter {
             const itemText = item.content.map(this.extractText).join('');
             elements.push(
               new Paragraph({
-                children: [
-                  new TextRun({ text: '• ' }),
-                  ...this.parseInlineFormatting(itemText)
-                ],
-                spacing: { after: 100 }
+                children: [new TextRun({ text: '• ' }), ...this.parseInlineFormatting(itemText)],
+                spacing: { after: 100 },
               })
             );
           }
@@ -252,11 +268,11 @@ export class DOCXConverter implements Converter {
               text: sheet.name,
               bold: true,
               size: 20,
-              color: '2E74B5'
-            })
+              color: '2E74B5',
+            }),
           ],
           heading: HeadingLevel.HEADING_3,
-          spacing: { before: 300, after: 150 }
+          spacing: { before: 300, after: 150 },
         })
       );
     }
@@ -271,21 +287,25 @@ export class DOCXConverter implements Converter {
 
       // Add header row if columns are defined
       if (sheet.cols) {
-        const cols = Array.isArray(sheet.cols) 
-          ? sheet.cols 
-          : String(sheet.cols).replace(/[[\]]/g, '').split(',').map(s => s.trim());
-        
-        const headerCells = cols.map(col => 
-          new TableCell({
-            children: [
-              new Paragraph({
-                children: [new TextRun({ text: col, bold: true })]
-              })
-            ],
-            shading: { fill: 'E8E8E8' }
-          })
+        const cols = Array.isArray(sheet.cols)
+          ? sheet.cols
+          : String(sheet.cols)
+              .replace(/[[\]]/g, '')
+              .split(',')
+              .map(s => s.trim());
+
+        const headerCells = cols.map(
+          col =>
+            new TableCell({
+              children: [
+                new Paragraph({
+                  children: [new TextRun({ text: col, bold: true })],
+                }),
+              ],
+              shading: { fill: 'E8E8E8' },
+            })
         );
-        
+
         tableRows.push(new TableRow({ children: headerCells }));
       }
 
@@ -299,9 +319,9 @@ export class DOCXConverter implements Converter {
             new TableCell({
               children: [
                 new Paragraph({
-                  children: [new TextRun({ text: String(value) })]
-                })
-              ]
+                  children: [new TextRun({ text: String(value) })],
+                }),
+              ],
             })
           );
         }
@@ -313,8 +333,8 @@ export class DOCXConverter implements Converter {
           rows: tableRows,
           width: {
             size: 100,
-            type: WidthType.PERCENTAGE
-          }
+            type: WidthType.PERCENTAGE,
+          },
         });
         elements.push(table);
       }
@@ -326,7 +346,7 @@ export class DOCXConverter implements Converter {
   private createParagraph(text: string): Paragraph {
     return new Paragraph({
       children: this.parseInlineFormatting(text),
-      spacing: { after: 120 }
+      spacing: { after: 120 },
     });
   }
 
@@ -338,7 +358,7 @@ export class DOCXConverter implements Converter {
     const patterns = [
       { regex: /\*\*(.+?)\*\*/g, format: { bold: true } },
       { regex: /\*(.+?)\*/g, format: { italics: true } },
-      { regex: /`(.+?)`/g, format: { font: 'Courier New' } }
+      { regex: /`(.+?)`/g, format: { font: 'Courier New' } },
     ];
 
     const matches: Array<{ index: number; length: number; text: string; format: any }> = [];
@@ -351,7 +371,7 @@ export class DOCXConverter implements Converter {
           index: match.index,
           length: match[0].length,
           text: match[1],
-          format: pattern.format
+          format: pattern.format,
         });
       }
     }
@@ -400,7 +420,7 @@ export class DOCXConverter implements Converter {
 
   private renderChartBlock(chart: ChartBlock): any[] {
     const elements: any[] = [];
-    
+
     if (chart.title) {
       elements.push(
         new Paragraph({
@@ -408,44 +428,44 @@ export class DOCXConverter implements Converter {
             new TextRun({
               text: chart.title,
               bold: true,
-              size: 28
-            })
+              size: 28,
+            }),
           ],
           heading: HeadingLevel.HEADING_2,
-          spacing: { before: 400, after: 200 }
+          spacing: { before: 400, after: 200 },
         })
       );
     }
-    
+
     elements.push(
       new Paragraph({
         children: [
           new TextRun({
             text: `[Chart: ${chart.chartType} - ${chart.data.length} series]`,
-            italics: true
-          })
+            italics: true,
+          }),
         ],
-        spacing: { after: 400 }
+        spacing: { after: 400 },
       })
     );
-    
-    const dataText = chart.data.map(series => 
-      `${series.label}: [${series.values.join(', ')}]`
-    ).join('; ');
-    
+
+    const dataText = chart.data
+      .map(series => `${series.label}: [${series.values.join(', ')}]`)
+      .join('; ');
+
     elements.push(
       new Paragraph({
         children: [new TextRun({ text: dataText })],
-        spacing: { after: 400 }
+        spacing: { after: 400 },
       })
     );
-    
+
     return elements;
   }
 
   private renderDiagramBlock(diagram: DiagramBlock): any[] {
     const elements: any[] = [];
-    
+
     if (diagram.title) {
       elements.push(
         new Paragraph({
@@ -453,46 +473,46 @@ export class DOCXConverter implements Converter {
             new TextRun({
               text: diagram.title,
               bold: true,
-              size: 28
-            })
+              size: 28,
+            }),
           ],
           heading: HeadingLevel.HEADING_2,
-          spacing: { before: 400, after: 200 }
+          spacing: { before: 400, after: 200 },
         })
       );
     }
-    
+
     elements.push(
       new Paragraph({
         children: [
           new TextRun({
             text: `[Diagram: ${diagram.diagramType} using ${diagram.engine}]`,
-            italics: true
-          })
+            italics: true,
+          }),
         ],
-        spacing: { after: 200 }
+        spacing: { after: 200 },
       })
     );
-    
+
     elements.push(
       new Paragraph({
         children: [
           new TextRun({
             text: diagram.code,
             font: 'Courier New',
-            size: 20
-          })
+            size: 20,
+          }),
         ],
-        spacing: { after: 400 }
+        spacing: { after: 400 },
       })
     );
-    
+
     return elements;
   }
 
   private renderCodeBlock(code: OSFCodeBlock): any[] {
     const elements: any[] = [];
-    
+
     if (code.caption) {
       elements.push(
         new Paragraph({
@@ -500,56 +520,56 @@ export class DOCXConverter implements Converter {
             new TextRun({
               text: code.caption,
               italics: true,
-              size: 22
-            })
+              size: 22,
+            }),
           ],
-          spacing: { before: 400, after: 100 }
+          spacing: { before: 400, after: 100 },
         })
       );
     }
-    
+
     const lines = code.code.split('\n');
     lines.forEach((line, index) => {
       const lineNum = index + 1;
       const isHighlighted = code.highlight && code.highlight.includes(lineNum);
-      
+
       const children: TextRun[] = [];
-      
+
       if (code.lineNumbers) {
         children.push(
           new TextRun({
             text: `${lineNum.toString().padStart(3, ' ')}  `,
             font: 'Courier New',
             size: 20,
-            color: '6E7781'
+            color: '6E7781',
           })
         );
       }
-      
+
       children.push(
         new TextRun({
           text: line,
           font: 'Courier New',
           size: 20,
-          shading: isHighlighted ? { fill: 'FFF3CD' } : undefined
+          shading: isHighlighted ? { fill: 'FFF3CD' } : undefined,
         })
       );
-      
+
       elements.push(
         new Paragraph({
           children,
-          spacing: { line: 276 }
+          spacing: { line: 276 },
         })
       );
     });
-    
+
     elements.push(
       new Paragraph({
         children: [],
-        spacing: { after: 400 }
+        spacing: { after: 400 },
       })
     );
-    
+
     return elements;
   }
 

@@ -12,6 +12,8 @@ export interface ConverterOptions {
   };
   includeMetadata?: boolean;
   customStyles?: Record<string, any>;
+  timeoutMs?: number;
+  puppeteerArgs?: string[];
 }
 
 export interface ConversionResult {
