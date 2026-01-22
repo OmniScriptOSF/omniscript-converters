@@ -11,7 +11,7 @@ export interface ConverterOptions {
     left: number;
   };
   includeMetadata?: boolean;
-  customStyles?: Record<string, any>;
+  customStyles?: Record<string, string | number | boolean>;
   timeoutMs?: number;
   puppeteerArgs?: string[];
 }
@@ -23,6 +23,7 @@ export interface ConversionResult {
 }
 
 export interface Converter {
+  // eslint-disable-next-line no-unused-vars -- type signature params are for clarity
   convert(document: OSFDocument, options?: ConverterOptions): Promise<ConversionResult>;
   getSupportedFormats(): string[];
 }

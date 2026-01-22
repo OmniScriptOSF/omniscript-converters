@@ -1,6 +1,19 @@
 import * as ExcelJS from 'exceljs';
-import { OSFDocument, MetaBlock, DocBlock, SlideBlock, SheetBlock } from 'omniscript-parser';
+import {
+  OSFDocument,
+  MetaBlock,
+  DocBlock,
+  SlideBlock,
+  SheetBlock,
+  type TextRun as OSFTextRun,
+} from 'omniscript-parser';
 import { Converter, ConverterOptions, ConversionResult } from './types';
+
+type ThemeColors = {
+  primary: string;
+  accent: string;
+  background: string;
+};
 
 export class XLSXConverter implements Converter {
   getSupportedFormats(): string[] {
@@ -136,7 +149,7 @@ export class XLSXConverter implements Converter {
 
     // Add data rows
     if (sheet.data) {
-      this.populateSheetData(worksheet, sheet, currentRow, options);
+      this.populateSheetData(worksheet, sheet, currentRow);
     }
 
     // Apply formulas if any
@@ -150,21 +163,17 @@ export class XLSXConverter implements Converter {
 
   private createContentWorksheet(
     workbook: ExcelJS.Workbook,
-    block: any,
+    block: DocBlock | SlideBlock,
     options: ConverterOptions,
     name: string
   ): void {
     const worksheet = workbook.addWorksheet(name);
     this.applyWorksheetStyling(worksheet, options);
 
-    let currentRow = 1;
-
     if (block.type === 'doc') {
-      const docBlock = block as DocBlock;
-      currentRow = this.addDocContentToWorksheet(worksheet, docBlock, currentRow);
+      this.addDocContentToWorksheet(worksheet, block, 1);
     } else if (block.type === 'slide') {
-      const slideBlock = block as SlideBlock;
-      currentRow = this.addSlideContentToWorksheet(worksheet, slideBlock, currentRow);
+      this.addSlideContentToWorksheet(worksheet, block, 1);
     }
 
     this.autoSizeColumns(worksheet);
@@ -248,8 +257,7 @@ export class XLSXConverter implements Converter {
   private populateSheetData(
     worksheet: ExcelJS.Worksheet,
     sheet: SheetBlock,
-    startRow: number,
-    options: ConverterOptions
+    startRow: number
   ): void {
     if (!sheet.data) return;
 
@@ -453,7 +461,7 @@ export class XLSXConverter implements Converter {
 
   private sanitizeWorksheetName(name: string): string {
     // Excel worksheet names have restrictions
-    return name.replace(/[\\\/\*\?\[\]:]/g, '_').substring(0, 31); // Max 31 characters
+    return name.replace(/[\\/*?:\\[\\]]/g, '_').substring(0, 31); // Max 31 characters
   }
 
   private getContentPreview(content: string): string {
@@ -461,11 +469,11 @@ export class XLSXConverter implements Converter {
     return preview.length > 50 ? preview.substring(0, 47) + '...' : preview;
   }
 
-  private extractText(run: any): string {
+  private extractText(run: OSFTextRun): string {
     if (typeof run === 'string') return run;
     if (run.type === 'link') return run.text;
     if (run.type === 'image') return run.alt || '';
-    if (run.text) return run.text;
+    if ('text' in run && typeof run.text === 'string') return run.text;
     return '';
   }
 
@@ -483,8 +491,8 @@ export class XLSXConverter implements Converter {
     return {};
   }
 
-  private getThemeColors(theme: string): any {
-    const themes: Record<string, any> = {
+  private getThemeColors(theme: string): ThemeColors {
+    const themes: Record<string, ThemeColors> = {
       default: {
         primary: 'FF2C3E50',
         accent: 'FF3498DB',

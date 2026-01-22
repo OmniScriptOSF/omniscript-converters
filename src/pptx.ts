@@ -8,8 +8,33 @@ import {
   ChartBlock,
   DiagramBlock,
   OSFCodeBlock,
+  type ChartDataSeries,
+  type ContentBlock,
+  type TextRun as OSFTextRun,
 } from 'omniscript-parser';
 import { Converter, ConverterOptions, ConversionResult } from './types';
+
+type ThemeConfig = {
+  primary: string;
+  secondary: string;
+  accent: string;
+  text: string;
+  background: string;
+  border: string;
+  tableBackground: string;
+  titleFont: string;
+  bodyFont: string;
+};
+
+type SlideBlockExtras = SlideBlock & {
+  transition?: string;
+  notes?: string;
+};
+
+type TransitionEffect = {
+  type: string;
+  dir?: string;
+};
 
 export class PPTXConverter implements Converter {
   getSupportedFormats(): string[] {
@@ -20,7 +45,7 @@ export class PPTXConverter implements Converter {
     const pptx = new PptxGenJS();
 
     // Set presentation metadata
-    this.setPresentationMetadata(pptx, document, options);
+    this.setPresentationMetadata(pptx, document);
 
     // Configure theme and layout
     this.configureTheme(pptx, options.theme || 'default');
@@ -39,11 +64,7 @@ export class PPTXConverter implements Converter {
     };
   }
 
-  private setPresentationMetadata(
-    pptx: PptxGenJS,
-    document: OSFDocument,
-    options: ConverterOptions
-  ): void {
+  private setPresentationMetadata(pptx: PptxGenJS, document: OSFDocument): void {
     const meta = this.getMetadata(document);
 
     pptx.author = String(meta.author) || 'OmniScript OSF';
@@ -60,6 +81,11 @@ export class PPTXConverter implements Converter {
       width: 10,
       height: 7.5,
     });
+
+    pptx.theme = {
+      headFontFace: themeConfig.titleFont,
+      bodyFontFace: themeConfig.bodyFont,
+    };
 
     // Note: Master slides removed for compatibility with pptxgenjs v4
   }
@@ -183,21 +209,22 @@ export class PPTXConverter implements Converter {
   ): void {
     const slide = pptx.addSlide();
     const theme = this.getThemeConfiguration(options.theme || 'default');
+    const slideExtras = slideBlock as SlideBlockExtras;
 
     // Apply layout based on slide props
-    const layout = (slideBlock as any).layout || 'TitleAndContent';
+    const layout = slideExtras.layout || 'TitleAndContent';
 
     // Add transition if specified
-    if ((slideBlock as any).transition) {
-      const transition = this.getTransitionEffect((slideBlock as any).transition);
+    if (slideExtras.transition) {
+      const transition = this.getTransitionEffect(slideExtras.transition);
       if (transition) {
-        (slide as any).transition = transition;
+        (slide as unknown as { transition?: TransitionEffect }).transition = transition;
       }
     }
 
     // Add notes if specified
-    if ((slideBlock as any).notes) {
-      slide.addNotes(String((slideBlock as any).notes));
+    if (slideExtras.notes) {
+      slide.addNotes(String(slideExtras.notes));
     }
 
     // Render based on layout type
@@ -220,7 +247,11 @@ export class PPTXConverter implements Converter {
     }
   }
 
-  private renderTitleOnlyLayout(slide: any, slideBlock: SlideBlock, theme: any): void {
+  private renderTitleOnlyLayout(
+    slide: PptxGenJS.Slide,
+    slideBlock: SlideBlock,
+    theme: ThemeConfig
+  ): void {
     if (slideBlock.title) {
       slide.addText(slideBlock.title, {
         x: 0.5,
@@ -236,7 +267,11 @@ export class PPTXConverter implements Converter {
     }
   }
 
-  private renderTitleAndContentLayout(slide: any, slideBlock: SlideBlock, theme: any): void {
+  private renderTitleAndContentLayout(
+    slide: PptxGenJS.Slide,
+    slideBlock: SlideBlock,
+    theme: ThemeConfig
+  ): void {
     // Add slide title
     if (slideBlock.title) {
       slide.addText(slideBlock.title, {
@@ -257,7 +292,7 @@ export class PPTXConverter implements Converter {
 
       for (const contentBlock of slideBlock.content) {
         if (contentBlock.type === 'unordered_list') {
-          const bullets = contentBlock.items.map((item: any) => {
+          const bullets = contentBlock.items.map(item => {
             const itemText = item.content.map(this.extractText).join('');
             return this.parseInlineFormatting(itemText);
           });
@@ -296,7 +331,11 @@ export class PPTXConverter implements Converter {
     }
   }
 
-  private renderTwoColumnLayout(slide: any, slideBlock: SlideBlock, theme: any): void {
+  private renderTwoColumnLayout(
+    slide: PptxGenJS.Slide,
+    slideBlock: SlideBlock,
+    theme: ThemeConfig
+  ): void {
     // Add slide title
     if (slideBlock.title) {
       slide.addText(slideBlock.title, {
@@ -316,7 +355,7 @@ export class PPTXConverter implements Converter {
       const leftColumn = slideBlock.content.slice(0, halfContent);
       const rightColumn = slideBlock.content.slice(halfContent);
 
-      let yPosition = slideBlock.title ? 1.8 : 0.5;
+      const yPosition = slideBlock.title ? 1.8 : 0.5;
 
       // Left column
       this.renderColumnContent(slide, leftColumn, 0.5, yPosition, 4.2, theme);
@@ -326,13 +365,17 @@ export class PPTXConverter implements Converter {
     }
   }
 
-  private renderBlankLayout(slide: any, slideBlock: SlideBlock, theme: any): void {
+  private renderBlankLayout(
+    slide: PptxGenJS.Slide,
+    slideBlock: SlideBlock,
+    theme: ThemeConfig
+  ): void {
     if (slideBlock.content) {
       let yPosition = 0.5;
 
       for (const contentBlock of slideBlock.content) {
         if (contentBlock.type === 'unordered_list') {
-          const bullets = contentBlock.items.map((item: any) => {
+          const bullets = contentBlock.items.map(item => {
             const itemText = item.content.map(this.extractText).join('');
             return this.parseInlineFormatting(itemText);
           });
@@ -371,18 +414,18 @@ export class PPTXConverter implements Converter {
   }
 
   private renderColumnContent(
-    slide: any,
-    content: any[],
+    slide: PptxGenJS.Slide,
+    content: ContentBlock[],
     x: number,
     y: number,
     width: number,
-    theme: any
+    theme: ThemeConfig
   ): void {
     let yPosition = y;
 
     for (const contentBlock of content) {
       if (contentBlock.type === 'unordered_list') {
-        const bullets = contentBlock.items.map((item: any) => {
+        const bullets = contentBlock.items.map(item => {
           const itemText = item.content.map(this.extractText).join('');
           return this.parseInlineFormatting(itemText);
         });
@@ -419,8 +462,8 @@ export class PPTXConverter implements Converter {
     }
   }
 
-  private parseInlineFormatting(text: string): any[] {
-    const parts: any[] = [];
+  private parseInlineFormatting(text: string): PptxGenJS.TextProps[] {
+    const parts: PptxGenJS.TextProps[] = [];
     let currentIndex = 0;
 
     // Match **bold**, *italic*, `code`
@@ -428,7 +471,12 @@ export class PPTXConverter implements Converter {
     const italicRegex = /\*(.+?)\*/g;
     const codeRegex = /`(.+?)`/g;
 
-    const matches: Array<{ index: number; length: number; text: string; format: any }> = [];
+    const matches: Array<{
+      index: number;
+      length: number;
+      text: string;
+      format: PptxGenJS.TextPropsOptions;
+    }> = [];
 
     // Find all bold matches
     let match;
@@ -494,8 +542,8 @@ export class PPTXConverter implements Converter {
     return parts;
   }
 
-  private getTransitionEffect(transition: string): any {
-    const transitions: Record<string, any> = {
+  private getTransitionEffect(transition: string): TransitionEffect | undefined {
+    const transitions: Record<string, TransitionEffect> = {
       FadeIn: { type: 'fade' },
       Fade: { type: 'fade' },
       Slide: { type: 'push', dir: 'right' },
@@ -506,7 +554,7 @@ export class PPTXConverter implements Converter {
       Reveal: { type: 'reveal', dir: 'right' },
     };
 
-    return transitions[transition] || transitions['Fade'];
+    return transitions[transition] || transitions.Fade;
   }
 
   private createSheetSlide(pptx: PptxGenJS, sheet: SheetBlock, options: ConverterOptions): void {
@@ -547,8 +595,8 @@ export class PPTXConverter implements Converter {
     }
   }
 
-  private prepareTableData(sheet: SheetBlock): any[][] {
-    const tableData: any[][] = [];
+  private prepareTableData(sheet: SheetBlock): PptxGenJS.TableRow[] {
+    const tableData: PptxGenJS.TableRow[] = [];
 
     // Add header row if columns are defined
     if (sheet.cols) {
@@ -559,7 +607,7 @@ export class PPTXConverter implements Converter {
             .split(',')
             .map(s => s.trim());
 
-      const headerRow = cols.map(col => ({
+      const headerRow: PptxGenJS.TableRow = cols.map(col => ({
         text: col,
         options: { bold: true, fill: { color: 'E8E8E8' } },
       }));
@@ -575,7 +623,7 @@ export class PPTXConverter implements Converter {
 
       // Add data rows
       for (let r = 1; r <= maxRow; r++) {
-        const row: any[] = [];
+        const row: PptxGenJS.TableRow = [];
         for (let c = 1; c <= maxCol; c++) {
           const key = `${r},${c}`;
           const value = sheet.data[key] || '';
@@ -627,8 +675,8 @@ export class PPTXConverter implements Converter {
     return sections.length > 0 ? sections : [{ content: [content] }];
   }
 
-  private formatContentForSlide(contentLines: string[]): any[] {
-    const formattedContent: any[] = [];
+  private formatContentForSlide(contentLines: string[]): PptxGenJS.TextProps[] {
+    const formattedContent: PptxGenJS.TextProps[] = [];
 
     for (const line of contentLines) {
       if (line.startsWith('- ') || line.startsWith('* ')) {
@@ -649,15 +697,16 @@ export class PPTXConverter implements Converter {
     return formattedContent;
   }
 
-  private extractText(run: any): string {
+  private extractText(run: OSFTextRun): string {
     if (typeof run === 'string') return run;
     if (run.type === 'link') return run.text;
     if (run.type === 'image') return run.alt || '';
-    if (run.text) return run.text;
+    if ('text' in run && typeof run.text === 'string') return run.text;
     return '';
   }
 
   private createChartSlide(pptx: PptxGenJS, chart: ChartBlock, options: ConverterOptions): void {
+    void options;
     const slide = pptx.addSlide();
 
     slide.addText(chart.title, {
@@ -670,9 +719,9 @@ export class PPTXConverter implements Converter {
       color: '2C3E50',
     });
 
-    const chartData = chart.data.map((series: any) => ({
+    const chartData = chart.data.map((series: ChartDataSeries) => ({
       name: series.label,
-      labels: series.values.map((_: any, i: number) => `Point ${i + 1}`),
+      labels: series.values.map((_, i) => `Point ${i + 1}`),
       values: series.values,
     }));
 
@@ -683,7 +732,7 @@ export class PPTXConverter implements Converter {
       h: 5,
       showTitle: false,
       showLegend: chart.options?.legend !== false,
-      chartColors: (chart.options?.colors as string[]) || undefined,
+      chartColors: chart.options?.colors || undefined,
     });
   }
 
@@ -692,6 +741,7 @@ export class PPTXConverter implements Converter {
     diagram: DiagramBlock,
     options: ConverterOptions
   ): void {
+    void options;
     const slide = pptx.addSlide();
 
     const title = diagram.title || `${diagram.diagramType} Diagram`;
@@ -728,6 +778,7 @@ export class PPTXConverter implements Converter {
   }
 
   private createCodeSlide(pptx: PptxGenJS, code: OSFCodeBlock, options: ConverterOptions): void {
+    void options;
     const slide = pptx.addSlide();
 
     const title = code.caption || `${code.language} Code`;
@@ -776,8 +827,8 @@ export class PPTXConverter implements Converter {
     return {};
   }
 
-  private getThemeConfiguration(theme: string): any {
-    const themes: Record<string, any> = {
+  private getThemeConfiguration(theme: string): ThemeConfig {
+    const themes: Record<string, ThemeConfig> = {
       default: {
         primary: '2C3E50',
         secondary: '7F8C8D',

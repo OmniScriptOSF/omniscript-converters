@@ -11,6 +11,7 @@ import {
   OSFCodeBlock,
   TableBlock,
 } from 'omniscript-parser';
+import type { TextRun as OSFTextRun } from 'omniscript-parser';
 import { Converter, ConverterOptions, ConversionResult } from './types';
 
 export class PDFConverter implements Converter {
@@ -182,12 +183,14 @@ export class PDFConverter implements Converter {
   }
 
   private renderDocBlock(doc: DocBlock, options: ConverterOptions): string {
+    void options;
     const content = doc.content || '';
     const html = this.renderMarkdown(content);
     return `<div class="doc-block">${html}</div>`;
   }
 
   private renderSlideBlock(slide: SlideBlock, options: ConverterOptions): string {
+    void options;
     let html = '<div class="slide-block">';
 
     if (slide.title) {
@@ -330,6 +333,7 @@ export class PDFConverter implements Converter {
   }
 
   private renderSheetBlock(sheet: SheetBlock, options: ConverterOptions): string {
+    void options;
     let html = '<div class="sheet-block">';
 
     if (sheet.name) {
@@ -381,6 +385,7 @@ export class PDFConverter implements Converter {
   }
 
   private renderTableBlock(table: TableBlock, options: ConverterOptions): string {
+    void options;
     const tableStyle = table.style || 'bordered';
     let html = '<div class="table-block">';
 
@@ -411,11 +416,13 @@ export class PDFConverter implements Converter {
     return html;
   }
 
-  private extractText(run: any): string {
+  private extractText(run: OSFTextRun): string {
     if (typeof run === 'string') return run;
-    if (run.type === 'link') return run.text;
-    if (run.type === 'image') return run.alt || '';
-    if (run.text) return run.text;
+    if ('type' in run) {
+      if (run.type === 'link') return run.text;
+      if (run.type === 'image') return run.alt || '';
+    }
+    if ('text' in run) return run.text;
     return '';
   }
 
@@ -429,6 +436,7 @@ export class PDFConverter implements Converter {
   }
 
   private renderChartBlock(chart: ChartBlock, options: ConverterOptions): string {
+    void options;
     let html = '<div class="chart-block" style="margin: 40px 0; page-break-inside: avoid;">';
 
     if (chart.title) {
@@ -441,10 +449,10 @@ export class PDFConverter implements Converter {
     html += '</div>';
 
     const chartPayload = {
-      labels: chart.data.map((d: any) => d.label),
-      datasets: chart.data.map((d: any, i: number) => ({
-        label: d.label,
-        data: d.values,
+      labels: chart.data.map(series => series.label),
+      datasets: chart.data.map((series, i) => ({
+        label: series.label,
+        data: series.values,
         backgroundColor: chart.options?.colors?.[i] || undefined,
       })),
     };
@@ -469,6 +477,7 @@ export class PDFConverter implements Converter {
   }
 
   private renderDiagramBlock(diagram: DiagramBlock, options: ConverterOptions): string {
+    void options;
     let html = '<div class="diagram-block" style="margin: 40px 0; page-break-inside: avoid;">';
 
     if (diagram.title) {
@@ -484,6 +493,7 @@ export class PDFConverter implements Converter {
   }
 
   private renderCodeBlock(code: OSFCodeBlock, options: ConverterOptions): string {
+    void options;
     let html = '<div class="code-block" style="margin: 40px 0; page-break-inside: avoid;">';
 
     if (code.caption) {

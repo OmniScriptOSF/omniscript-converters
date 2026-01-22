@@ -19,8 +19,11 @@ import {
   ChartBlock,
   DiagramBlock,
   OSFCodeBlock,
+  type TextRun as OSFTextRun,
 } from 'omniscript-parser';
 import { Converter, ConverterOptions, ConversionResult } from './types';
+
+type DocxElement = Paragraph | Table;
 
 export class DOCXConverter implements Converter {
   getSupportedFormats(): string[] {
@@ -51,8 +54,11 @@ export class DOCXConverter implements Converter {
     };
   }
 
-  private generateDocumentElements(document: OSFDocument, options: ConverterOptions): any[] {
-    const elements: any[] = [];
+  private generateDocumentElements(
+    document: OSFDocument,
+    options: ConverterOptions
+  ): DocxElement[] {
+    const elements: DocxElement[] = [];
 
     for (const block of document.blocks) {
       switch (block.type) {
@@ -85,8 +91,8 @@ export class DOCXConverter implements Converter {
     return elements;
   }
 
-  private renderMetaBlock(meta: MetaBlock): any[] {
-    const elements: any[] = [];
+  private renderMetaBlock(meta: MetaBlock): DocxElement[] {
+    const elements: DocxElement[] = [];
 
     if (meta.props.title) {
       elements.push(
@@ -129,9 +135,9 @@ export class DOCXConverter implements Converter {
     return elements;
   }
 
-  private renderDocBlock(doc: DocBlock): any[] {
+  private renderDocBlock(doc: DocBlock): DocxElement[] {
     const content = doc.content || '';
-    const elements: any[] = [];
+    const elements: DocxElement[] = [];
 
     // Split content into lines and process markdown-like syntax
     const lines = content.split('\n');
@@ -212,8 +218,8 @@ export class DOCXConverter implements Converter {
     return elements;
   }
 
-  private renderSlideBlock(slide: SlideBlock): any[] {
-    const elements: any[] = [];
+  private renderSlideBlock(slide: SlideBlock): DocxElement[] {
+    const elements: DocxElement[] = [];
 
     // Add slide title
     if (slide.title) {
@@ -256,8 +262,8 @@ export class DOCXConverter implements Converter {
     return elements;
   }
 
-  private renderSheetBlock(sheet: SheetBlock): any[] {
-    const elements: any[] = [];
+  private renderSheetBlock(sheet: SheetBlock): DocxElement[] {
+    const elements: DocxElement[] = [];
 
     // Add sheet title
     if (sheet.name) {
@@ -361,7 +367,12 @@ export class DOCXConverter implements Converter {
       { regex: /`(.+?)`/g, format: { font: 'Courier New' } },
     ];
 
-    const matches: Array<{ index: number; length: number; text: string; format: any }> = [];
+    const matches: Array<{
+      index: number;
+      length: number;
+      text: string;
+      format: { bold?: boolean; italics?: boolean; font?: string };
+    }> = [];
 
     // Find all formatting matches
     for (const pattern of patterns) {
@@ -410,16 +421,18 @@ export class DOCXConverter implements Converter {
     return runs;
   }
 
-  private extractText(run: any): string {
+  private extractText(run: OSFTextRun): string {
     if (typeof run === 'string') return run;
-    if (run.type === 'link') return run.text;
-    if (run.type === 'image') return run.alt || '';
-    if (run.text) return run.text;
+    if ('type' in run) {
+      if (run.type === 'link') return run.text;
+      if (run.type === 'image') return run.alt || '';
+    }
+    if ('text' in run) return run.text;
     return '';
   }
 
-  private renderChartBlock(chart: ChartBlock): any[] {
-    const elements: any[] = [];
+  private renderChartBlock(chart: ChartBlock): DocxElement[] {
+    const elements: DocxElement[] = [];
 
     if (chart.title) {
       elements.push(
@@ -463,8 +476,8 @@ export class DOCXConverter implements Converter {
     return elements;
   }
 
-  private renderDiagramBlock(diagram: DiagramBlock): any[] {
-    const elements: any[] = [];
+  private renderDiagramBlock(diagram: DiagramBlock): DocxElement[] {
+    const elements: DocxElement[] = [];
 
     if (diagram.title) {
       elements.push(
@@ -510,8 +523,8 @@ export class DOCXConverter implements Converter {
     return elements;
   }
 
-  private renderCodeBlock(code: OSFCodeBlock): any[] {
-    const elements: any[] = [];
+  private renderCodeBlock(code: OSFCodeBlock): DocxElement[] {
+    const elements: DocxElement[] = [];
 
     if (code.caption) {
       elements.push(
