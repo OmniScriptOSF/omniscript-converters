@@ -471,8 +471,10 @@ export class XLSXConverter implements Converter {
 
   private extractText(run: OSFTextRun): string {
     if (typeof run === 'string') return run;
-    if (run.type === 'link') return run.text;
-    if (run.type === 'image') return run.alt || '';
+    if (typeof run === 'object' && run !== null && 'type' in run) {
+      if (run.type === 'link') return run.text;
+      if (run.type === 'image') return run.alt || '';
+    }
     if ('text' in run && typeof run.text === 'string') return run.text;
     return '';
   }
