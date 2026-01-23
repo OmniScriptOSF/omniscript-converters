@@ -114,7 +114,7 @@ WCAG 2.1 AA for website. Keyboard navigation. Screen reader support. CLI/parser 
 New @blocks start experimental. Document in spec with version tag. Parser accepts but warns. Promote to stable after 2 releases.
 
 ## DEPENDENCIES
-Prefer standard library. Parser: zero dependencies. Converters: pdfkit, docx, pptxgenjs, exceljs. VSCode: @types and vscode SDK only. Website: Next.js, React, Tailwind. Review licenses.
+Prefer standard library. Parser: zero dependencies. Converters: pdfkit, docx, pptxgenjs, xlsx-populate. VSCode: @types and vscode SDK only. Website: Next.js, React, Tailwind. Review licenses.
 
 ## FORMATTING AND LINTING
 TypeScript: ESLint v9 strict. Formatter: Prettier for TS/JS. Python (future): ruff, black. Run in CI.

@@ -1,6 +1,15 @@
+// File: tests/xlsx.test.ts
+// What: XLSX converter tests including round-trip checks.
+// Why: Validate XLSX output generation and basic content integrity.
+// Related: src/xlsx.ts, src/types/xlsx-populate.d.ts
+
+import { mkdtempSync, writeFileSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import path from 'path';
+import XlsxPopulate from 'xlsx-populate';
 import { describe, it, expect, beforeEach } from 'vitest';
-import { XLSXConverter } from '../src/xlsx';
 import { parse } from 'omniscript-parser';
+import { XLSXConverter } from '../src/xlsx';
 
 describe('XLSXConverter', () => {
   let converter: XLSXConverter;
@@ -213,6 +222,43 @@ describe('XLSXConverter', () => {
 
       expect(result.buffer).toBeInstanceOf(Buffer);
       expect(result.buffer.length).toBeGreaterThan(0);
+    });
+
+    it('should round-trip XLSX via file', async () => {
+      const osfContent = `
+@sheet {
+  name: "RoundTrip";
+  cols: [Product, Price, Total];
+  data {
+    (1,1)="Widget"; (1,2)=19.99;
+  }
+  formula (4,3): "=B4*2";
+}
+      `;
+
+      const document = parse(osfContent);
+      const result = await converter.convert(document);
+
+      const tempDir = mkdtempSync(path.join(tmpdir(), 'osf-xlsx-'));
+      const filePath = path.join(tempDir, 'roundtrip.xlsx');
+
+      try {
+        writeFileSync(filePath, result.buffer);
+
+        const workbook = await XlsxPopulate.fromFileAsync(filePath);
+        const sheet = workbook.sheet(0);
+
+        expect(sheet.name()).toBe('RoundTrip');
+        expect(sheet.cell(1, 1).value()).toBe('RoundTrip');
+        expect(sheet.cell(3, 1).value()).toBe('Product');
+        expect(sheet.cell(4, 1).value()).toBe('Widget');
+        expect(sheet.cell(4, 2).value()).toBe(19.99);
+
+        const formula = sheet.cell(4, 3).formula();
+        expect(formula).toEqual(expect.stringMatching(/B4\*2/));
+      } finally {
+        rmSync(tempDir, { recursive: true, force: true });
+      }
     });
   });
 });

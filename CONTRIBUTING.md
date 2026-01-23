@@ -129,7 +129,7 @@ Join our discussions on [GitHub Discussions](https://github.com/OmniScriptOSF/om
 - **PDF**: pdfkit
 - **DOCX**: docx
 - **PPTX**: pptxgenjs
-- **XLSX**: exceljs
+- **XLSX**: xlsx-populate
 - **Testing**: Vitest
 
 ---
